@@ -1,0 +1,168 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Comment {
+  id        String   @id
+  postId    String
+  authorId  String
+  createdAt DateTime @default(now())
+  content   String
+  Post      Post     @relation(fields: [postId], references: [id])
+}
+
+model Likes {
+  id        String   @id
+  authorId  String
+  postId    String
+  createdAt DateTime @default(now())
+  Post      Post     @relation(fields: [postId], references: [id])
+}
+
+model Post {
+  id        String    @id
+  content   String
+  published Boolean   @default(true)
+  authorId  String
+  createdAt DateTime  @default(now())
+  Comment   Comment[]
+  Likes     Likes[]
+  profiles  profiles  @relation(fields: [authorId], references: [userid])
+}
+
+model activation {
+  id        String  @id
+  used      Boolean @default(false)
+  userid    String  @unique
+  expiresIn Int
+}
+
+model badge {
+  id        String   @id
+  name      String
+  image     String
+  userid    String
+  createdAt DateTime @default(now())
+  profiles  profiles @relation(fields: [userid], references: [userid])
+}
+
+model exams {
+  question     String
+  answer       String
+  whitelist_id String
+  id           String     @id
+  whitelists   whitelists @relation(fields: [whitelist_id], references: [id])
+}
+
+model followers {
+  id                                        String   @id
+  followers_id                              String
+  following_id                              String
+  profiles_followers_followers_idToprofiles profiles @relation("followers_followers_idToprofiles", fields: [followers_id], references: [userid])
+  profiles_followers_following_idToprofiles profiles @relation("followers_following_idToprofiles", fields: [following_id], references: [userid])
+}
+
+model medal {
+  id       String   @id
+  name     String
+  type     String
+  image    String
+  afinity  String
+  userid   String
+  profiles profiles @relation(fields: [userid], references: [userid])
+}
+
+model notifications {
+  id      String  @id
+  read    Boolean @default(false)
+  userid  String
+  content String?
+  title   String?
+  small   String
+  users   users   @relation(fields: [userid], references: [id])
+}
+
+model profiles {
+  avatar                                     String?     @default("https://google.com")
+  banner                                     String?     @default("https://google.com")
+  userid                                     String      @unique
+  status                                     String?
+  description                                String?
+  nickname                                   String?
+  region_city                                String?
+  region_country                             String?
+  region_uf                                  String?
+  slug                                       String?     @unique
+  instagram                                  String?
+  twitch                                     String?
+  youtube                                    String?
+  id                                         String      @id
+  Post                                       Post[]
+  badge                                      badge[]
+  followers_followers_followers_idToprofiles followers[] @relation("followers_followers_idToprofiles")
+  followers_followers_following_idToprofiles followers[] @relation("followers_following_idToprofiles")
+  medal                                      medal[]
+  users                                      users       @relation(fields: [userid], references: [id])
+  visitors_visitors_visitor_idToprofiles     visitors[]  @relation("visitors_visitor_idToprofiles")
+  visitors_visitors_visitors_idToprofiles    visitors[]  @relation("visitors_visitors_idToprofiles")
+}
+
+model recovery {
+  id        String  @id
+  used      Boolean @default(false)
+  userid    String  @unique
+  expiresIn Int
+}
+
+model users {
+  id            String          @id
+  username      String?         @unique
+  password      String
+  email         String          @unique
+  createdAt     DateTime        @default(now())
+  role          Roles           @default(USER)
+  features      String[]
+  game_session  String?
+  isPremium     Boolean         @default(false)
+  isVerified    Boolean         @default(false)
+  status        String?
+  timeout       Int?
+  auth_system   String          @default("NORMAL")
+  notifications notifications[]
+  profiles      profiles?
+  whitelists    whitelists?
+}
+
+model visitors {
+  id                                      String   @id
+  at                                      DateTime @default(now())
+  visitor_id                              String
+  visitors_id                             String
+  profiles_visitors_visitor_idToprofiles  profiles @relation("visitors_visitor_idToprofiles", fields: [visitor_id], references: [userid])
+  profiles_visitors_visitors_idToprofiles profiles @relation("visitors_visitors_idToprofiles", fields: [visitors_id], references: [userid])
+}
+
+model whitelists {
+  id        String  @id
+  staff_id  String?
+  user_id   String  @unique
+  createdAt Int?
+  updateAt  Int?
+  timeout   Int?
+  status    String
+  count     Int     @default(autoincrement())
+  exams     exams[]
+  users     users   @relation(fields: [user_id], references: [id])
+}
+
+enum Roles {
+  USER
+  SUPPORT
+  MODERATOR
+  ADMIN
+}
